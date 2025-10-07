@@ -53,20 +53,27 @@ EOFSCRIPT
 
     stage('SonarQube Analysis') {
       steps {
-        script {
-          docker.image('sonarsource/sonar-scanner-cli:latest').inside("--network ${DOCKER_NET}") {
-            withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-              sh '''
-                sonar-scanner \
-                  -Dsonar.projectKey=demo-app-js \
-                  -Dsonar.sources=src \
-                  -Dsonar.tests=tests \
-                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-                  -Dsonar.host.url=${SONAR_HOST} \
-                  -Dsonar.token=${SONAR_TOKEN}
-              '''
-            }
-          }
+        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+          sh '''
+            cat > sonar-script.sh << 'EOFSCRIPT'
+#!/bin/sh
+cd /ws
+sonar-scanner \
+  -Dsonar.projectKey=demo-app-js \
+  -Dsonar.sources=src \
+  -Dsonar.tests=tests \
+  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+  -Dsonar.host.url=$SONAR_HOST \
+  -Dsonar.token=$SONAR_TOKEN
+EOFSCRIPT
+            
+            docker run --rm --network ${DOCKER_NET} \
+              -e SONAR_HOST=${SONAR_HOST} \
+              -e SONAR_TOKEN=${SONAR_TOKEN} \
+              -v "$PWD:/ws" \
+              -v "$PWD/sonar-script.sh:/sonar-script.sh" \
+              sonarsource/sonar-scanner-cli:latest sh /sonar-script.sh
+          '''
         }
       }
     }
