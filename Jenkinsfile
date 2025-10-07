@@ -30,7 +30,7 @@ pipeline {
           docker run --rm --network ${DOCKER_NET} \
             -v "$PWD:/ws" \
             -w /ws \
-            node:20-alpine sh -lc "npm install && npm test"
+            node:20-alpine sh -c 'npm install && npm test'
         '''
       }
       post {
