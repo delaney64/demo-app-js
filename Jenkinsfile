@@ -25,10 +25,17 @@ pipeline {
     stage('Install & Test') {
       steps {
         sh '''
-          docker run --rm --network ${DOCKER_NET} \\
-            -v "$PWD:/ws" \\
-            -w /ws \\
-            node:20-alpine /bin/sh -c "npm install && npm test"
+          cat > test-script.sh << 'EOFSCRIPT'
+#!/bin/sh
+cd /ws
+npm install && npm test
+EOFSCRIPT
+          chmod +x test-script.sh
+          
+          docker run --rm --network ${DOCKER_NET} \
+            -v "$PWD:/ws" \
+            -v "$PWD/test-script.sh:/test-script.sh" \
+            node:20-alpine /test-script.sh
         '''
       }
       post {
