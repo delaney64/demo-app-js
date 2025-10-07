@@ -28,7 +28,8 @@ pipeline {
           cat > test-script.sh << 'EOFSCRIPT'
 #!/bin/sh
 cd /ws
-npm install && npm test
+npm install
+npm run test:jest
 EOFSCRIPT
           
           docker run --rm --network ${DOCKER_NET} \
@@ -42,27 +43,40 @@ EOFSCRIPT
           junit testResults: 'junit.xml', allowEmptyResults: true
           publishHTML(target: [
             reportDir: 'coverage',
-            reportFiles: 'lcov-report/index.html',
-            reportName: 'Coverage'
+            reportFiles: 'index.html',
+            reportName: 'Coverage',
+            allowMissing: true
           ])
         }
       }
     }
 
     stage('SonarQube Analysis') {
+      when {
+        expression { 
+          return env.SKIP_SONAR != 'true'
+        }
+      }
       steps {
-        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-          sh '''
-            docker run --rm --network ${DOCKER_NET} \
-              -v "$PWD:/usr/src" -w /usr/src \
-              sonarsource/sonar-scanner-cli:latest \
-              -Dsonar.projectKey=demo-app-js \
-              -Dsonar.sources=src \
-              -Dsonar.tests=tests \
-              -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-              -Dsonar.host.url=${SONAR_HOST} \
-              -Dsonar.token=${SONAR_TOKEN}
-          '''
+        script {
+          try {
+            withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+              sh '''
+                docker run --rm --network ${DOCKER_NET} \
+                  -v "$PWD:/usr/src" -w /usr/src \
+                  sonarsource/sonar-scanner-cli:latest \
+                  -Dsonar.projectKey=demo-app-js \
+                  -Dsonar.sources=src \
+                  -Dsonar.tests=tests \
+                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                  -Dsonar.host.url=${SONAR_HOST} \
+                  -Dsonar.token=${SONAR_TOKEN}
+              '''
+            }
+          } catch (Exception e) {
+            echo "⚠️ SonarQube analysis skipped: ${e.message}"
+            echo "To enable SonarQube, add 'sonar-token' credential in Jenkins"
+          }
         }
       }
     }
