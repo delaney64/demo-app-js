@@ -53,8 +53,16 @@ EOFSCRIPT
 
     stage('SonarQube Analysis') {
       steps {
+        sh 'pwd'
         sh 'ls -la'
-        sh 'ls -la tests || echo "tests folder not found"'
+        
+        // Debug: Check what SonarQube container sees
+        sh '''
+          docker run --rm --network ${DOCKER_NET} \
+            -v "$PWD:/usr/src" -w /usr/src \
+            sonarsource/sonar-scanner-cli:latest \
+            sh -c "ls -la && echo '---TESTS FOLDER---' && ls -la tests"
+        '''
         
         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
           sh '''
