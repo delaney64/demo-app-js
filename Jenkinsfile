@@ -53,28 +53,20 @@ EOFSCRIPT
 
     stage('SonarQube Analysis') {
       steps {
-        sh 'echo "=== Jenkins workspace contents ===" && ls -laR'
-        
-        sh '''
-          echo "=== What SonarQube container sees ==="
-          docker run --rm --network ${DOCKER_NET} \
-            -v "$PWD:/usr/src" -w /usr/src \
-            sonarsource/sonar-scanner-cli:latest \
-            sh -c "ls -laR /usr/src"
-        '''
-        
-        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-          sh '''
-            docker run --rm --network ${DOCKER_NET} \
-              -v "$PWD:/usr/src" -w /usr/src \
-              sonarsource/sonar-scanner-cli:latest \
-              -Dsonar.projectKey=demo-app-js \
-              -Dsonar.sources=. \
-              -Dsonar.exclusions=node_modules/**,coverage/**,test-script.sh \
-              -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-              -Dsonar.host.url=${SONAR_HOST} \
-              -Dsonar.token=${SONAR_TOKEN}
-          '''
+        script {
+          docker.image('sonarsource/sonar-scanner-cli:latest').inside("--network ${DOCKER_NET}") {
+            withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+              sh '''
+                sonar-scanner \
+                  -Dsonar.projectKey=demo-app-js \
+                  -Dsonar.sources=src \
+                  -Dsonar.tests=tests \
+                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                  -Dsonar.host.url=${SONAR_HOST} \
+                  -Dsonar.token=${SONAR_TOKEN}
+              '''
+            }
+          }
         }
       }
     }
