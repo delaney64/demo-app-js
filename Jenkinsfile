@@ -64,7 +64,6 @@ EOFSCRIPT
               sonar-scanner \
                 -Dsonar.projectKey=demo-app-js \
                 -Dsonar.sources=src \
-                -Dsonar.tests=tests \
                 -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
                 -Dsonar.host.url=${SONAR_HOST} \
                 -Dsonar.token=${SONAR_TOKEN}
