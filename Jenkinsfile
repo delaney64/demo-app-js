@@ -53,23 +53,18 @@ EOFSCRIPT
 
     stage('SonarQube Analysis') {
       steps {
-        script {
-          def workspace = pwd()
-          echo "Workspace: ${workspace}"
-          
-          withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-            sh """
-              docker run --rm --network ${DOCKER_NET} \
-                -v "${workspace}:/usr/src" -w /usr/src \
-                sonarsource/sonar-scanner-cli:latest \
-                -Dsonar.projectKey=demo-app-js \
-                -Dsonar.sources=src \
-                -Dsonar.tests=tests \
-                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-                -Dsonar.host.url=${SONAR_HOST} \
-                -Dsonar.token=${SONAR_TOKEN}
-            """
-          }
+        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+          sh '''
+            docker run --rm --network ${DOCKER_NET} \
+              -v "$PWD:/usr/src" -w /usr/src \
+              sonarsource/sonar-scanner-cli:latest \
+              -Dsonar.projectKey=demo-app-js \
+              -Dsonar.sources=. \
+              -Dsonar.exclusions=node_modules/**,coverage/**,test-script.sh \
+              -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+              -Dsonar.host.url=${SONAR_HOST} \
+              -Dsonar.token=${SONAR_TOKEN}
+          '''
         }
       }
     }
