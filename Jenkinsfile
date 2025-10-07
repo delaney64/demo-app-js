@@ -52,31 +52,19 @@ EOFSCRIPT
     }
 
     stage('SonarQube Analysis') {
-      when {
-        expression { 
-          return env.SKIP_SONAR != 'true'
-        }
-      }
       steps {
-        script {
-          try {
-            withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-              sh '''
-                docker run --rm --network ${DOCKER_NET} \
-                  -v "$PWD:/usr/src" -w /usr/src \
-                  sonarsource/sonar-scanner-cli:latest \
-                  -Dsonar.projectKey=demo-app-js \
-                  -Dsonar.sources=src \
-                  -Dsonar.tests=tests \
-                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-                  -Dsonar.host.url=${SONAR_HOST} \
-                  -Dsonar.token=${SONAR_TOKEN}
-              '''
-            }
-          } catch (Exception e) {
-            echo "⚠️ SonarQube analysis skipped: ${e.message}"
-            echo "To enable SonarQube, add 'sonar-token' credential in Jenkins"
-          }
+        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+          sh '''
+            docker run --rm --network ${DOCKER_NET} \
+              -v "$PWD:/usr/src" -w /usr/src \
+              sonarsource/sonar-scanner-cli:latest \
+              -Dsonar.projectKey=demo-app-js \
+              -Dsonar.sources=src \
+              -Dsonar.tests=tests \
+              -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+              -Dsonar.host.url=${SONAR_HOST} \
+              -Dsonar.token=${SONAR_TOKEN}
+          '''
         }
       }
     }
