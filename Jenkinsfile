@@ -53,6 +53,16 @@ EOFSCRIPT
 
     stage('SonarQube Analysis') {
       steps {
+        sh 'echo "=== Jenkins workspace contents ===" && ls -laR'
+        
+        sh '''
+          echo "=== What SonarQube container sees ==="
+          docker run --rm --network ${DOCKER_NET} \
+            -v "$PWD:/usr/src" -w /usr/src \
+            sonarsource/sonar-scanner-cli:latest \
+            sh -c "ls -laR /usr/src"
+        '''
+        
         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
           sh '''
             docker run --rm --network ${DOCKER_NET} \
