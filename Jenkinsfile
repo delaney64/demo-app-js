@@ -30,12 +30,11 @@ pipeline {
 cd /ws
 npm install && npm test
 EOFSCRIPT
-          chmod +x test-script.sh
           
           docker run --rm --network ${DOCKER_NET} \
             -v "$PWD:/ws" \
             -v "$PWD/test-script.sh:/test-script.sh" \
-            node:20-alpine /test-script.sh
+            node:20-alpine sh /test-script.sh
         '''
       }
       post {
