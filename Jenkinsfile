@@ -25,17 +25,15 @@ pipeline {
 
     stage('Install & Test') {
       steps {
-        // FIX: removed stray quote and ensured clean shell syntax
         sh '''
           docker run --rm --network ${DOCKER_NET} \
             -v "$PWD:/ws" \
             -w /ws \
-            'node:20-alpine sh -c 'npm install && npm test'
+            node:20-alpine sh -c 'npm install && npm test'
         '''
       }
       post {
         always {
-          // These are fine; they just won't produce results yet
           junit testResults: 'junit.xml', allowEmptyResults: true
           publishHTML(target: [
             reportDir: 'coverage',
