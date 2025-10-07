@@ -23,9 +23,11 @@ pipeline {
     stage('Install & Test') {
       steps {
         sh '''
-          docker run --rm --network ${DOCKER_NET} -v "$PWD:/ws" -w /ws node:20-alpine sh -lc "
-            npm ci
-            npm run test:jest
+          docker run --rm --network ${DOCKER_NET} \
+          -v "$PWD:/ws" \
+          -w /ws \
+          node:20-alpine sh -lc "npm install && npm test"
+           
           "
         '''
       }
