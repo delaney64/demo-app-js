@@ -1,10 +1,12 @@
 pipeline {
   agent any
+
   environment {
-    DOCKER_NET = 'devsecops-lab_devsecops-lab_devsecops_net'   // your lab network
-    SONAR_HOST = 'http://sonarqube:9000'         // SonarQube service name/port in Docker network
+    DOCKER_NET = 'devsecops-lab_devsecops-lab_devsecops_net'   // Docker network Jenkins & Sonar share
+    SONAR_HOST = 'http://sonarqube:9000'                        // SonarQube in the Docker network
     IMAGE_NAME = 'demo-app-js:latest'
   }
+
   options { timestamps() }
 
   stages {
@@ -14,6 +16,7 @@ pipeline {
           branches: [[name: '*/main']],
           userRemoteConfigs: [[
             url: 'https://github.com/delaney64/demo-app-js.git',
+            // you can omit credentialsId if it's a public repo
             credentialsId: 'github-https'
           ]]
         ])
@@ -22,18 +25,18 @@ pipeline {
 
     stage('Install & Test') {
       steps {
+        // FIX: removed stray quote and ensured clean shell syntax
         sh '''
           docker run --rm --network ${DOCKER_NET} \
-          -v "$PWD:/ws" \
-          -w /ws \
-          node:20-alpine sh -lc "npm install && npm test"
-           
-          "
+            -v "$PWD:/ws" \
+            -w /ws \
+            node:20-alpine sh -lc "npm install && npm test"
         '''
       }
       post {
         always {
-          junit testResults: 'junit.xml', allowEmptyResults: true // if you later add junit output
+          // These are fine; they just won't produce results yet
+          junit testResults: 'junit.xml', allowEmptyResults: true
           publishHTML(target: [
             reportDir: 'coverage',
             reportFiles: 'lcov-report/index.html',
@@ -51,7 +54,6 @@ pipeline {
               -v "$PWD:/usr/src" -w /usr/src \
               sonarsource/sonar-scanner-cli:latest \
               -Dsonar.projectKey=demo-app-js \
-              -Dsonar.projectBaseDir=/usr/src \
               -Dsonar.sources=src \
               -Dsonar.tests=tests \
               -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
@@ -81,7 +83,11 @@ pipeline {
   }
 
   post {
-    success { echo "Pipeline complete: tests, Sonar, build, and Trivy ✅" }
-    failure { echo "Pipeline failed. Check the stage logs." }
+    success {
+      echo "✅ Pipeline complete: tests, SonarQube analysis, build, and Trivy scan finished successfully."
+    }
+    failure {
+      echo "❌ Pipeline failed. Check the stage logs above."
+    }
   }
 }
