@@ -2,8 +2,8 @@ pipeline {
   agent any
 
   environment {
-    DOCKER_NET = 'devsecops-lab_devsecops-lab_devsecops_net'   // Docker network Jenkins & Sonar share
-    SONAR_HOST = 'http://sonarqube:9000'                        // SonarQube in the Docker network
+    DOCKER_NET = 'devsecops-lab_devsecops-lab_devsecops_net'
+    SONAR_HOST = 'http://sonarqube:9000'
     IMAGE_NAME = 'demo-app-js:latest'
   }
 
@@ -16,7 +16,6 @@ pipeline {
           branches: [[name: '*/main']],
           userRemoteConfigs: [[
             url: 'https://github.com/delaney64/demo-app-js.git',
-            // you can omit credentialsId if it's a public repo
             credentialsId: 'github-https'
           ]]
         ])
@@ -29,7 +28,7 @@ pipeline {
           docker run --rm --network ${DOCKER_NET} \
             -v "$PWD:/ws" \
             -w /ws \
-            node:20-alpine sh -c 'npm install && npm test'
+            node:20-alpine sh -c "npm install && npm test"
         '''
       }
       post {
