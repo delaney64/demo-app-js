@@ -22,14 +22,24 @@ pipeline {
       }
     }
 
+    stage('Debug - Check Files') {
+      steps {
+        sh 'ls -la'
+        sh 'pwd'
+        sh 'cat package.json || echo "package.json not found"'
+      }
+    }
+
     stage('Install & Test') {
       steps {
-        sh '''
-          docker run --rm --network ${DOCKER_NET} \
-            -v "$PWD:/ws" \
-            -w /ws \
-            node:20-alpine sh -c "npm install && npm test"
-        '''
+        script {
+          sh """
+            docker run --rm --network ${DOCKER_NET} \
+              -v "\$PWD:/ws" \
+              -w /ws \
+              node:20-alpine /bin/sh -c 'npm install && npm test'
+          """
+        }
       }
       post {
         always {
