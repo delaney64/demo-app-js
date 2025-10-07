@@ -1,7 +1,7 @@
 pipeline {
   agent any
   environment {
-    DOCKER_NET = 'devsecops-lab_devsecops_net'   // your lab network
+    DOCKER_NET = 'devsecops-lab_devsecops-lab_devsecops_net'   // your lab network
     SONAR_HOST = 'http://sonarqube:9000'         // SonarQube service name/port in Docker network
     IMAGE_NAME = 'demo-app-js:latest'
   }
